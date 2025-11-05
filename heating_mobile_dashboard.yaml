@@ -1,0 +1,262 @@
+# Complete iPhone-Friendly Heating Dashboard
+# Create this as a new dashboard in Home Assistant
+
+title: "🔥 Heating Analytics"
+icon: mdi:fire
+theme: "default"
+path: "heating"
+
+# iPhone-optimized layout - single column, mobile-first design
+views:
+  - title: "Overview"
+    path: "overview"
+    icon: mdi:home-thermometer
+    panel: false
+    cards:
+      # =============================================================================
+      # CURRENT STATUS - Large, prominent display
+      # =============================================================================
+      - type: vertical-stack
+        cards:
+          # Main heating status - large and prominent
+          - type: entity
+            entity: binary_sensor.zone_one_heating_active
+            name: "Zone ONE Heating"
+            state_color: true
+            icon: mdi:fire
+            card_mod:
+              style: |
+                ha-card {
+                  font-size: 1.2em;
+                  padding: 16px;
+                }
+
+          # Current temperature info
+          - type: glance
+            title: "🌡️ Temperature Status"
+            entities:
+              - entity: climate.castle_thermostat
+                name: "Current"
+                attribute: current_temperature
+              - entity: climate.castle_thermostat
+                name: "Target"  
+                attribute: temperature
+              - entity: climate.castle_thermostat
+                name: "Mode"
+                attribute: hvac_mode
+            columns: 3
+
+      # =============================================================================
+      # TODAY'S STATISTICS - Easy to read cards
+      # =============================================================================
+      - type: vertical-stack
+        cards:
+          # Daily metrics in large, readable format
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: counter.zone_one_heating_cycles_today
+                name: "Cycles"
+                icon: mdi:counter
+                
+              - type: entity
+                entity: sensor.zone_one_average_heating_duration
+                name: "Avg Duration"
+                icon: mdi:timer-outline
+
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: input_number.zone_one_total_heating_time_today
+                name: "Total Time"
+                icon: mdi:timer
+                
+              - type: entity
+                entity: sensor.daily_heating_efficiency_zone_one
+                name: "Efficiency"
+                icon: mdi:speedometer
+
+      # =============================================================================
+      # QUICK INSIGHTS - Swipe-friendly info card
+      # =============================================================================
+      - type: markdown
+        title: "📊 Today's Summary"
+        content: >
+          ## 🔥 Heating Status
+          
+          {% if is_state('binary_sensor.zone_one_heating_active', 'on') %}
+          **Currently:** 🔥 **HEATING**
+          {% else %}
+          **Currently:** ❄️ **OFF**
+          {% endif %}
+          
+          ---
+          
+          ### Today's Performance
+          
+          **🔄 Cycles:** {{ states('counter.zone_one_heating_cycles_today') }}  
+          **⏱️ Total Time:** {{ (states('input_number.zone_one_total_heating_time_today') | float / 60) | round(1) }} hours  
+          **📊 Avg Duration:** {{ states('sensor.zone_one_average_heating_duration') }} min  
+          **⚡ Efficiency:** {{ states('sensor.daily_heating_efficiency_zone_one') }}%
+          
+          ---
+          
+          ### Temperature Info
+          **🌡️ Current:** {{ state_attr('climate.castle_thermostat', 'current_temperature') }}°C  
+          **🎯 Target:** {{ state_attr('climate.castle_thermostat', 'temperature') }}°C  
+          **📋 Mode:** {{ state_attr('climate.castle_thermostat', 'hvac_mode') | title }}
+          
+          {% set avg_duration = states('sensor.zone_one_average_heating_duration') | float %}
+          {% if avg_duration < 10 %}
+          ### 💡 **Tip:** Short cycles detected - check insulation
+          {% elif avg_duration > 25 %}
+          ### 🌟 **Great!** Efficient long heating cycles
+          {% else %}
+          ### ✅ **Normal** heating performance
+          {% endif %}
+
+      # =============================================================================
+      # ACTIVITY CHART - Touch-friendly chart
+      # =============================================================================
+      - type: history-graph
+        title: "📈 24-Hour Activity"
+        entities:
+          - entity: binary_sensor.zone_one_heating_active
+            name: "Heating"
+          - entity: climate.one
+            name: "Climate"
+        hours_to_show: 24
+        refresh_interval: 300
+
+  # =============================================================================
+  # SECOND TAB - DETAILED ANALYTICS
+  # =============================================================================
+  - title: "Analytics" 
+    path: "analytics"
+    icon: mdi:chart-line
+    cards:
+      # Historical comparison
+      - type: history-graph
+        title: "📊 Weekly Heating Cycles"
+        entities:
+          - counter.zone_one_heating_cycles_today
+        hours_to_show: 168  # 7 days
+
+      # Efficiency tracking
+      - type: entities
+        title: "🎯 Efficiency Metrics"
+        entities:
+          - entity: sensor.daily_heating_efficiency_zone_one
+            name: "Today's Efficiency"
+            icon: mdi:speedometer
+          - entity: sensor.zone_one_heating_time_today
+            name: "History Stats Time"
+          - entity: sensor.zone_one_heating_cycles_count_today
+            name: "History Stats Cycles"
+          - entity: input_datetime.zone_one_heating_start
+            name: "Last Heating Started"
+
+      # Cost estimation
+      - type: entities
+        title: "💰 Cost Analysis"
+        entities:
+          - type: section
+            label: "Daily Estimates"
+          - entity: input_number.zone_one_total_heating_time_today
+            name: "Heating Time"
+            secondary_info: "{{ (states('input_number.zone_one_total_heating_time_today') | float / 60) | round(1) }} hours"
+          - type: divider
+          - type: custom:template-entity-row
+            entity: counter.zone_one_heating_cycles_today
+            name: "Estimated Daily Cost"
+            secondary: >
+              {% set hours = states('input_number.zone_one_total_heating_time_today') | float / 60 %}
+              {% set kwh_per_hour = 3 %}
+              {% set cost_per_kwh = 0.28 %}
+              £{{ (hours * kwh_per_hour * cost_per_kwh) | round(2) }}
+            icon: mdi:currency-gbp
+          - type: custom:template-entity-row  
+            entity: counter.zone_one_heating_cycles_today
+            name: "Monthly Projection"
+            secondary: >
+              {% set daily_cost = (states('input_number.zone_one_total_heating_time_today') | float / 60) * 3 * 0.28 %}
+              £{{ (daily_cost * 30) | round(0) }}
+            icon: mdi:calendar-month
+
+  # =============================================================================
+  # THIRD TAB - CONTROLS & SETTINGS
+  # =============================================================================  
+  - title: "Controls"
+    path: "controls"
+    icon: mdi:cog
+    cards:
+      # Climate control
+      - type: thermostat
+        entity: climate.one
+        name: "Zone ONE Thermostat"
+
+      # Quick actions
+      - type: vertical-stack
+        title: "🔧 Quick Actions"
+        cards:
+          - type: horizontal-stack
+            cards:
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: counter.reset
+                  service_data:
+                    entity_id: counter.zone_one_heating_cycles_today
+                name: "Reset Cycles"
+                icon: mdi:refresh
+                
+              - type: button
+                tap_action:
+                  action: call-service
+                  service: input_number.set_value
+                  service_data:
+                    entity_id: input_number.zone_one_total_heating_time_today
+                    value: 0
+                name: "Reset Time"
+                icon: mdi:timer-outline
+
+          # System info
+          - type: entities
+            title: "🔍 System Information"
+            entities:
+              - entity: binary_sensor.zone_one_heating_active
+                name: "Heating Sensor"
+              - entity: counter.zone_one_heating_cycles_today
+                name: "Cycle Counter"
+              - entity: input_number.zone_one_total_heating_time_today
+                name: "Time Accumulator"
+              - entity: sensor.zone_one_average_heating_duration
+                name: "Average Calculator"
+
+# =============================================================================
+# MOBILE OPTIMIZATION SETTINGS
+# =============================================================================
+# Add these CSS customizations for better mobile experience
+card_mod:
+  style: |
+    /* Mobile-first responsive design */
+    @media (max-width: 768px) {
+      .view {
+        padding: 8px !important;
+      }
+      
+      ha-card {
+        margin-bottom: 8px !important;
+        border-radius: 12px !important;
+      }
+      
+      .card-header {
+        font-size: 1.1em !important;
+        font-weight: bold !important;
+      }
+      
+      /* Larger touch targets for buttons */
+      mwc-button {
+        min-height: 48px !important;
+      }
+    }

@@ -1,0 +1,236 @@
+# Complete Heating Analytics Package for Zone ONE
+# Place this file in your /config/packages/ directory
+
+# =============================================================================
+# COUNTERS - Track daily heating cycles
+# =============================================================================
+counter:
+  zone_one_heating_cycles_today:
+    name: Zone ONE Heating Cycles Today
+    icon: mdi:counter
+    initial: 0
+    step: 1
+
+# =============================================================================
+# INPUT HELPERS - Store heating data
+# =============================================================================
+input_datetime:
+  zone_one_heating_start:
+    name: Zone ONE Heating Start Time
+    has_date: true
+    has_time: true
+
+input_number:
+  zone_one_total_heating_time_today:
+    name: Zone ONE Total Heating Time Today
+    min: 0
+    max: 1440  # 24 hours in minutes
+    step: 0.1
+    unit_of_measurement: "min"
+    icon: mdi:timer
+
+# =============================================================================
+# BINARY SENSORS - Detect heating state
+# =============================================================================
+binary_sensor:
+  - platform: template
+    sensors:
+      zone_one_heating_active:
+        friendly_name: "Zone ONE Heating Active"
+        device_class: heat
+        value_template: >
+          {{ state_attr('climate.castle_thermostat', 'hvac_action') == 'heating' }}
+        icon_template: >
+          {% if state_attr('climate.castle_thermostat', 'hvac_action') == 'heating' %}
+            mdi:fire
+          {% else %}
+            mdi:radiator-disabled
+          {% endif %}
+
+# =============================================================================
+# TEMPLATE SENSORS - Calculate heating metrics
+# =============================================================================
+template:
+  - sensor:
+      - name: "Zone ONE Average Heating Duration"
+        unit_of_measurement: "min"
+        state: >
+          {% set cycles = states('counter.zone_one_heating_cycles_today') | int %}
+          {% set total_time = states('input_number.zone_one_total_heating_time_today') | float %}
+          {% if cycles > 0 %}
+            {{ (total_time / cycles) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
+        icon: mdi:timer-outline
+
+      - name: "Daily Heating Efficiency Zone ONE"
+        unit_of_measurement: "%"
+        state: >
+          {% set cycles = states('counter.zone_one_heating_cycles_today') | int %}
+          {% set avg_duration = states('sensor.zone_one_average_heating_duration') | float %}
+          {% if cycles > 0 and avg_duration > 0 %}
+            {% if avg_duration < 5 %}
+              25
+            {% elif avg_duration < 10 %}
+              50
+            {% elif avg_duration < 15 %}
+              75
+            {% elif avg_duration < 25 %}
+              90
+            {% else %}
+              95
+            {% endif %}
+          {% else %}
+            0
+          {% endif %}
+        icon: mdi:speedometer
+
+# =============================================================================
+# HISTORY STATS SENSORS - Alternative tracking method
+# =============================================================================
+sensor:
+  - platform: history_stats
+    name: Zone ONE Heating Time Today
+    entity_id: binary_sensor.zone_one_heating_active
+    state: 'on'
+    type: time
+    start: '{{ now().replace(hour=0, minute=0, second=0, microsecond=0) }}'
+    end: '{{ now() }}'
+    
+  - platform: history_stats
+    name: Zone ONE Heating Cycles Count Today
+    entity_id: binary_sensor.zone_one_heating_active
+    state: 'on'
+    type: count
+    start: '{{ now().replace(hour=0, minute=0, second=0, microsecond=0) }}'
+    end: '{{ now() }}'
+
+# =============================================================================
+# AUTOMATIONS - Heating cycle tracking
+# =============================================================================
+automation:
+  - id: count_zone_one_heating_cycle
+    alias: "Count Zone ONE Heating Cycle"
+    description: "Increment counter and record start time when Zone ONE heating turns on"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.zone_one_heating_active
+        from: 'off'
+        to: 'on'
+    action:
+      - service: counter.increment
+        target:
+          entity_id: counter.zone_one_heating_cycles_today
+      - service: input_datetime.set_datetime
+        target:
+          entity_id: input_datetime.zone_one_heating_start
+        data:
+          datetime: "{{ now() }}"
+      - service: logbook.log
+        data:
+          name: "Heating Tracker"
+          message: "Zone ONE heating cycle {{ states('counter.zone_one_heating_cycles_today') }} started"
+          entity_id: binary_sensor.zone_one_heating_active
+
+  - id: calculate_zone_one_heating_duration
+    alias: "Calculate Zone ONE Heating Duration"
+    description: "Calculate and add heating duration when Zone ONE heating turns off"
+    trigger:
+      - platform: state
+        entity_id: binary_sensor.zone_one_heating_active
+        from: 'on'
+        to: 'off'
+    action:
+      - variables:
+          start_time: "{{ states('input_datetime.zone_one_heating_start') }}"
+          end_time: "{{ now() }}"
+          duration_minutes: >
+            {% set start = as_timestamp(start_time) %}
+            {% set end = as_timestamp(end_time) %}
+            {{ ((end - start) / 60) | round(1) }}
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.zone_one_total_heating_time_today
+        data:
+          value: >
+            {{ 
+              (states('input_number.zone_one_total_heating_time_today') | float) + 
+              (duration_minutes | float) 
+            }}
+      - service: logbook.log
+        data:
+          name: "Heating Tracker"
+          message: "Zone ONE heated for {{ duration_minutes }} minutes (Total today: {{ states('input_number.zone_one_total_heating_time_today') }} min)"
+
+  - id: reset_daily_heating_counters
+    alias: "Reset Daily Heating Counters"
+    description: "Reset all heating counters and totals at midnight"
+    trigger:
+      - platform: time
+        at: "00:00:00"
+    action:
+      - service: counter.reset
+        target:
+          entity_id: counter.zone_one_heating_cycles_today
+      - service: input_number.set_value
+        target:
+          entity_id: input_number.zone_one_total_heating_time_today
+        data:
+          value: 0
+      - service: logbook.log
+        data:
+          name: "Heating Tracker"
+          message: "Daily heating counters reset for new day"
+
+  - id: daily_heating_summary_report
+    alias: "Daily Heating Summary Report"
+    description: "Send daily heating statistics at 11 PM"
+    trigger:
+      - platform: time
+        at: "23:00:00"
+    condition:
+      - condition: numeric_state
+        entity_id: counter.zone_one_heating_cycles_today
+        above: 0
+    action:
+      - service: notify.persistent_notification
+        data:
+          title: "📊 Daily Heating Report"
+          message: >
+            Today's heating summary for Zone ONE:
+            🔥 Total cycles: {{ states('counter.zone_one_heating_cycles_today') }}
+            ⏱️ Total time: {{ states('input_number.zone_one_total_heating_time_today') }} minutes
+            📊 Average duration: {{ states('sensor.zone_one_average_heating_duration') }} min
+            ⚡ Efficiency: {{ states('sensor.daily_heating_efficiency_zone_one') }}%
+
+  - id: unusual_heating_pattern_alert
+    alias: "Unusual Heating Pattern Alert"
+    description: "Alert when heating cycles are unusually frequent"
+    trigger:
+      - platform: numeric_state
+        entity_id: counter.zone_one_heating_cycles_today
+        above: 50
+    action:
+      - service: notify.persistent_notification
+        data:
+          title: "⚠️ High Heating Activity"
+          message: >
+            Unusual heating activity detected: {{ states('counter.zone_one_heating_cycles_today') }} cycles today in Zone ONE.
+            This might indicate temperature settings issues or system problems.
+
+  - id: short_heating_cycle_alert
+    alias: "Short Heating Cycle Alert"
+    description: "Alert when average heating cycles are very short"
+    trigger:
+      - platform: numeric_state
+        entity_id: sensor.zone_one_average_heating_duration
+        below: 3
+        for: "00:30:00"
+    action:
+      - service: notify.persistent_notification
+        data:
+          title: "🔧 Heating System Check"
+          message: >
+            Zone ONE heating cycles are very short ({{ states('sensor.zone_one_average_heating_duration') }} min average).
+            This might indicate a system issue or poor sensor placement.

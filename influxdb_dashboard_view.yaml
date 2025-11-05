@@ -1,0 +1,150 @@
+# Enhanced Heating Dashboard with InfluxDB Historical Data
+# Add this as a second view to your existing heating_dashboard_fixed.yaml
+
+# Add this as a new view in your existing dashboard views section:
+
+  - title: "Historical Analytics"
+    path: "historical"
+    icon: mdi:chart-timeline-variant
+    cards:
+      # =============================================================================
+      # INFLUXDB POWERED ANALYTICS
+      # =============================================================================
+      - type: vertical-stack
+        title: "📈 Long-term Trends (InfluxDB Data)"
+        cards:
+          # Monthly averages from InfluxDB
+          - type: horizontal-stack
+            cards:
+              - type: statistic
+                entity: sensor.monthly_heating_cycles_average
+                name: "30-Day Avg Cycles"
+                period: month
+                stat_type: mean
+                
+              - type: statistic
+                entity: sensor.monthly_average_heating_duration
+                name: "30-Day Avg Duration"
+                period: month
+                stat_type: mean
+                
+              - type: statistic
+                entity: sensor.weekly_heating_efficiency
+                name: "7-Day Efficiency"
+                period: week
+                stat_type: mean
+
+      # =============================================================================
+      # COST ANALYTICS FROM INFLUXDB
+      # =============================================================================
+      - type: entities
+        title: "💰 Cost Analytics (InfluxDB Powered)"
+        entities:
+          - entity: sensor.daily_heating_cost
+            name: "Today's Cost"
+            icon: mdi:currency-gbp
+          - entity: sensor.monthly_heating_cost_projection
+            name: "Monthly Projection"
+            icon: mdi:calendar-month
+          - entity: sensor.heating_efficiency_trend
+            name: "Efficiency Trend (7-day)"
+            icon: mdi:trending-up
+          - type: divider
+          - entity: sensor.daily_heating_time
+            name: "Daily Time Meter"
+          - entity: sensor.monthly_heating_cycles
+            name: "Monthly Cycles Meter"
+
+      # =============================================================================
+      # HISTORICAL CHARTS - Long-term view
+      # =============================================================================
+      - type: history-graph
+        title: "📊 30-Day Heating Cycle History"
+        entities:
+          - sensor.monthly_heating_cycles_average
+          - counter.zone_one_heating_cycles_today
+        hours_to_show: 720  # 30 days
+        refresh_interval: 3600
+
+      - type: history-graph
+        title: "⏱️ 30-Day Duration Trends"
+        entities:
+          - sensor.monthly_average_heating_duration
+          - sensor.zone_one_average_heating_duration
+        hours_to_show: 720  # 30 days
+        refresh_interval: 3600
+
+      - type: history-graph
+        title: "💡 Efficiency Trends (Weekly)"
+        entities:
+          - sensor.weekly_heating_efficiency
+          - sensor.daily_heating_efficiency_zone_one
+        hours_to_show: 336  # 14 days
+        refresh_interval: 3600
+
+      # =============================================================================
+      # ADVANCED ANALYTICS INSIGHTS
+      # =============================================================================
+      - type: markdown
+        title: "🎯 Advanced Analytics Insights"
+        content: >
+          ## InfluxDB-Powered Long-term Analysis
+          
+          ### 📊 **Monthly Performance**
+          - **Average Cycles:** {{ states('sensor.monthly_heating_cycles_average') | round(1) }}/day
+          - **Average Duration:** {{ states('sensor.monthly_average_heating_duration') | round(1) }} minutes
+          - **Efficiency Trend:** {{ states('sensor.heating_efficiency_trend') | round(1) }}%
+          
+          ### 💰 **Cost Analysis**
+          - **Today's Cost:** £{{ states('sensor.daily_heating_cost') }}
+          - **Monthly Projection:** £{{ states('sensor.monthly_heating_cost_projection') }}
+          - **Daily Average:** £{{ (states('sensor.monthly_heating_cost_projection') | float / 30) | round(2) }}
+          
+          ### 📈 **Performance Insights**
+          {% set monthly_cycles = states('sensor.monthly_heating_cycles_average') | float %}
+          {% set weekly_efficiency = states('sensor.weekly_heating_efficiency') | float %}
+          
+          **System Performance:**
+          {% if monthly_cycles < 10 %}
+          🌟 **Excellent** - Very efficient heating system
+          {% elif monthly_cycles < 15 %}
+          ✅ **Good** - Normal heating performance  
+          {% elif monthly_cycles < 25 %}
+          ⚠️ **Moderate** - Consider efficiency improvements
+          {% else %}
+          🔧 **High Usage** - Check insulation and settings
+          {% endif %}
+          
+          **Efficiency Status:**
+          {% if weekly_efficiency > 75 %}
+          🌟 **Excellent Efficiency** ({{ weekly_efficiency | round(1) }}%)
+          {% elif weekly_efficiency > 60 %}
+          ✅ **Good Efficiency** ({{ weekly_efficiency | round(1) }}%)
+          {% else %}
+          ⚠️ **Needs Improvement** ({{ weekly_efficiency | round(1) }}%)
+          {% endif %}
+          
+          ### 🔍 **Data Sources**
+          - **Real-time Data:** From heating_analytics_package.yaml
+          - **Historical Data:** From InfluxDB database
+          - **Trends:** 30-day rolling averages
+          - **Cost Calculations:** Based on actual usage patterns
+          
+          *Data updated: {{ now().strftime('%Y-%m-%d %H:%M') }}*
+
+      # =============================================================================
+      # SEASONAL COMPARISON (If you have historical data)
+      # =============================================================================
+      - type: entities
+        title: "🌡️ Seasonal Performance Tracking"
+        entities:
+          - entity: sensor.monthly_heating_cycles_average
+            name: "Current Month Avg"
+            secondary_info: "{{ states('sensor.monthly_heating_cycles_average') }} cycles/day"
+          - type: divider
+          - entity: sensor.monthly_total_heating_time
+            name: "Monthly Runtime"
+            secondary_info: "{{ (states('sensor.monthly_total_heating_time') | float / 60) | round(0) }} hours"
+          - entity: sensor.monthly_heating_cost_projection
+            name: "Monthly Cost"
+            secondary_info: "£{{ states('sensor.monthly_heating_cost_projection') }}"

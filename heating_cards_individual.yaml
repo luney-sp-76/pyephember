@@ -1,0 +1,174 @@
+# Individual Heating Cards for Easy Integration
+# Copy any of these cards individually into your existing dashboard
+
+# =============================================================================
+# BASIC HEATING STATUS CARD - Add this to any dashboard
+# =============================================================================
+# Card 1: Simple heating status
+type: entity
+entity: binary_sensor.zone_one_heating_active
+name: "Zone ONE Heating"
+state_color: true
+icon: mdi:fire
+
+---
+
+# =============================================================================
+# DAILY STATS ROW - Three cards in a row
+# =============================================================================
+# Card 2a: Daily statistics row (using entity cards - more reliable)
+type: horizontal-stack
+cards:
+  - type: entity
+    entity: counter.zone_one_heating_cycles_today
+    name: "Cycles Today"
+    icon: mdi:counter
+    
+  - type: entity
+    entity: sensor.zone_one_average_heating_duration
+    name: "Avg Duration"
+    icon: mdi:timer-outline
+    
+  - type: entity
+    entity: input_number.zone_one_total_heating_time_today
+    name: "Total Time"
+    icon: mdi:timer
+
+---
+
+# Card 2b: Alternative - Statistics with proper configuration
+type: horizontal-stack
+cards:
+  - type: statistic
+    entity: counter.zone_one_heating_cycles_today
+    name: "Cycles Today"
+    stat_type: state
+    period: 5minute
+    
+  - type: statistic
+    entity: sensor.zone_one_average_heating_duration
+    name: "Avg Duration" 
+    stat_type: state
+    unit: "min"
+    period: 5minute
+    
+  - type: statistic
+    entity: input_number.zone_one_total_heating_time_today
+    name: "Total Time"
+    stat_type: state
+    unit: "min"
+    period: 5minute
+
+---
+
+# =============================================================================
+# HEATING EFFICIENCY CARD - Quick overview
+# =============================================================================
+# Card 3: Efficiency overview
+type: entities
+title: "🔥 Heating Efficiency"
+entities:
+  - entity: sensor.daily_heating_efficiency_zone_one
+    name: "Efficiency"
+    icon: mdi:speedometer
+  - entity: counter.zone_one_heating_cycles_today
+    name: "Daily Cycles"
+  - entity: input_number.zone_one_total_heating_time_today
+    name: "Total Time (min)"
+
+---
+
+# =============================================================================
+# 24-HOUR HEATING CHART - Shows heating activity
+# =============================================================================
+# Card 4: 24-hour activity chart
+type: history-graph
+title: "🔥 Heating Activity (24h)"
+entities:
+  - binary_sensor.zone_one_heating_active
+  - climate.one
+hours_to_show: 24
+refresh_interval: 300
+
+---
+
+# =============================================================================
+# HEATING INSIGHTS CARD - Smart summary with tips
+# =============================================================================
+# Card 5: Smart insights card
+type: markdown
+title: "💡 Heating Insights"
+content: >
+  ## Today's Heating Summary
+  
+  **Cycles:** {{ states('counter.zone_one_heating_cycles_today') }}
+  **Runtime:** {{ (states('input_number.zone_one_total_heating_time_today') | float / 60) | round(1) }}h
+  **Status:** {% if is_state('binary_sensor.zone_one_heating_active', 'on') %}🔥 Heating{% else %}❄️ Off{% endif %}
+  
+  **Current:** {{ state_attr('climate.one', 'current_temperature') }}°C
+  **Target:** {{ state_attr('climate.one', 'temperature') }}°C
+
+---
+
+# =============================================================================
+# SIMPLE ENTITIES CARD - Always works, shows all info
+# =============================================================================
+# Card 7: Simple entities list (guaranteed to work)
+type: entities
+title: "🔥 Zone ONE Heating Stats"
+entities:
+  - entity: binary_sensor.zone_one_heating_active
+    name: "Heating Status"
+  - entity: counter.zone_one_heating_cycles_today
+    name: "Cycles Today"
+  - entity: sensor.zone_one_average_heating_duration
+    name: "Average Duration"
+  - entity: input_number.zone_one_total_heating_time_today
+    name: "Total Time Today"
+  - entity: sensor.daily_heating_efficiency_zone_one
+    name: "Efficiency"
+
+---
+
+# =============================================================================
+# GLANCE CARD - Compact overview
+# =============================================================================
+# Card 8: Glance card (compact, icon-focused)
+type: glance
+title: "Zone ONE Heating"
+entities:
+  - entity: binary_sensor.zone_one_heating_active
+    name: "Status"
+  - entity: counter.zone_one_heating_cycles_today
+    name: "Cycles"
+  - entity: sensor.zone_one_average_heating_duration
+    name: "Avg Duration"
+  - entity: input_number.zone_one_total_heating_time_today
+    name: "Total Time"
+
+---
+
+# =============================================================================
+# QUICK ACTIONS - Reset buttons
+# =============================================================================
+# Card 6: Quick action buttons
+type: horizontal-stack
+cards:
+  - type: button
+    tap_action:
+      action: call-service
+      service: counter.reset
+      service_data:
+        entity_id: counter.zone_one_heating_cycles_today
+    name: "Reset Cycles"
+    icon: mdi:refresh
+    
+  - type: button
+    tap_action:
+      action: call-service
+      service: input_number.set_value
+      service_data:
+        entity_id: input_number.zone_one_total_heating_time_today
+        value: 0
+    name: "Reset Time"
+    icon: mdi:timer-outline
