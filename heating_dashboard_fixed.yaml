@@ -153,10 +153,9 @@ views:
           - type: button
             tap_action:
               action: call-service
-              service: climate.set_temperature
+              service: homeassistant.update_entity
               service_data:
                 entity_id: climate.castle_thermostat
-                temperature: "{{ state_attr('climate.castle_thermostat', 'temperature') }}"
             name: "Refresh Climate"
             icon: mdi:thermometer
 

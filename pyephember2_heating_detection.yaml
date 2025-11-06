@@ -121,15 +121,16 @@ template:
           {{ states('climate.castle_thermostat') }}
         attributes:
           all_attributes: >
-            {{ state_attr('climate.castle_thermostat') }}
-          hvac_action: "{{ state_attr('climate.castle_thermostat', 'hvac_action') }}"
-          hvac_modes: "{{ state_attr('climate.castle_thermostat', 'hvac_modes') }}"
-          current_temperature: "{{ state_attr('climate.castle_thermostat', 'current_temperature') }}"
-          temperature: "{{ state_attr('climate.castle_thermostat', 'temperature') }}"
-          min_temp: "{{ state_attr('climate.castle_thermostat', 'min_temp') }}"
-          max_temp: "{{ state_attr('climate.castle_thermostat', 'max_temp') }}"
-          target_temp_step: "{{ state_attr('climate.castle_thermostat', 'target_temp_step') }}"
-          supported_features: "{{ state_attr('climate.castle_thermostat', 'supported_features') }}"
+            {% set attrs = state_attr('climate.castle_thermostat', 'hvac_action') %}
+            {% if attrs is not none %}All attributes available{% else %}No attributes found{% endif %}
+          hvac_action: "{{ state_attr('climate.castle_thermostat', 'hvac_action') | default('unknown', true) }}"
+          hvac_modes: "{{ state_attr('climate.castle_thermostat', 'hvac_modes') | default('unknown', true) }}"
+          current_temperature: "{{ state_attr('climate.castle_thermostat', 'current_temperature') | default('unknown', true) }}"
+          temperature: "{{ state_attr('climate.castle_thermostat', 'temperature') | default('unknown', true) }}"
+          min_temp: "{{ state_attr('climate.castle_thermostat', 'min_temp') | default('unknown', true) }}"
+          max_temp: "{{ state_attr('climate.castle_thermostat', 'max_temp') | default('unknown', true) }}"
+          target_temp_step: "{{ state_attr('climate.castle_thermostat', 'target_temp_step') | default('unknown', true) }}"
+          supported_features: "{{ state_attr('climate.castle_thermostat', 'supported_features') | default('unknown', true) }}"
         icon: mdi:bug
 
 # =============================================================================
@@ -147,11 +148,11 @@ automation:
         data:
           name: "PyEphEmber2 Debug"
           message: >
-            Climate changed: {{ trigger.from_state.state }} → {{ trigger.to_state.state }}
-            Action: {{ trigger.from_state.attributes.hvac_action }} → {{ trigger.to_state.attributes.hvac_action }}
-            Mode: {{ trigger.from_state.attributes.hvac_mode }} → {{ trigger.to_state.attributes.hvac_mode }}
-            Temp: {{ trigger.from_state.attributes.current_temperature }}°C → {{ trigger.to_state.attributes.current_temperature }}°C
-            Target: {{ trigger.from_state.attributes.temperature }}°C → {{ trigger.to_state.attributes.temperature }}°C
+            Climate changed: {{ trigger.from_state.state if trigger.from_state else 'unknown' }} → {{ trigger.to_state.state if trigger.to_state else 'unknown' }}
+            Action: {{ trigger.from_state.attributes.hvac_action if trigger.from_state and trigger.from_state.attributes else 'unknown' }} → {{ trigger.to_state.attributes.hvac_action if trigger.to_state and trigger.to_state.attributes else 'unknown' }}
+            Mode: {{ trigger.from_state.attributes.hvac_mode if trigger.from_state and trigger.from_state.attributes and 'hvac_mode' in trigger.from_state.attributes else 'unknown' }} → {{ trigger.to_state.attributes.hvac_mode if trigger.to_state and trigger.to_state.attributes and 'hvac_mode' in trigger.to_state.attributes else 'unknown' }}
+            Temp: {{ trigger.from_state.attributes.current_temperature if trigger.from_state and trigger.from_state.attributes else 'unknown' }}°C → {{ trigger.to_state.attributes.current_temperature if trigger.to_state and trigger.to_state.attributes else 'unknown' }}°C
+            Target: {{ trigger.from_state.attributes.temperature if trigger.from_state and trigger.from_state.attributes else 'unknown' }}°C → {{ trigger.to_state.attributes.temperature if trigger.to_state and trigger.to_state.attributes else 'unknown' }}°C
           entity_id: climate.castle_thermostat
 
   - id: log_heating_detection_changes

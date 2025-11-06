@@ -103,3 +103,6 @@ venv.bak/
 
 # Credentials file (NEVER commit real credentials!)
 test_with_credentials.sh
+
+# All yaml files
+*.yaml

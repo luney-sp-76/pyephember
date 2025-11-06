@@ -6,7 +6,7 @@
 # =============================================================================
 counter:
   zone_one_heating_cycles_today:
-    name: Zone ONE Heating Cycles Today
+    name: "Heating Analytics - Zone ONE Heating Cycles Today"
     icon: mdi:counter
     initial: 0
     step: 1
@@ -16,13 +16,13 @@ counter:
 # =============================================================================
 input_datetime:
   zone_one_heating_start:
-    name: Zone ONE Heating Start Time
+    name: "Heating Analytics - Zone ONE Heating Start Time"
     has_date: true
     has_time: true
 
 input_number:
   zone_one_total_heating_time_today:
-    name: Zone ONE Total Heating Time Today
+    name: "Heating Analytics - Zone ONE Total Heating Time Today"
     min: 0
     max: 1440  # 24 hours in minutes
     step: 0.1
@@ -91,7 +91,7 @@ template:
 # =============================================================================
 sensor:
   - platform: history_stats
-    name: Zone ONE Heating Time Today
+    name: "Zone ONE Heating Time Today"
     entity_id: binary_sensor.zone_one_heating_active
     state: 'on'
     type: time
@@ -99,7 +99,7 @@ sensor:
     end: '{{ now() }}'
     
   - platform: history_stats
-    name: Zone ONE Heating Cycles Count Today
+    name: "Zone ONE Heating Cycles Count Today"
     entity_id: binary_sensor.zone_one_heating_active
     state: 'on'
     type: count
@@ -129,7 +129,7 @@ automation:
           datetime: "{{ now() }}"
       - service: logbook.log
         data:
-          name: "Heating Tracker"
+          name: "Heating Analytics Tracker 1"
           message: "Zone ONE heating cycle {{ states('counter.zone_one_heating_cycles_today') }} started"
           entity_id: binary_sensor.zone_one_heating_active
 
@@ -160,7 +160,7 @@ automation:
             }}
       - service: logbook.log
         data:
-          name: "Heating Tracker"
+          name: "Heating Analytics Tracker 2"
           message: "Zone ONE heated for {{ duration_minutes }} minutes (Total today: {{ states('input_number.zone_one_total_heating_time_today') }} min)"
 
   - id: reset_daily_heating_counters
@@ -180,7 +180,7 @@ automation:
           value: 0
       - service: logbook.log
         data:
-          name: "Heating Tracker"
+          name: "Heating Analytics Tracker 3"
           message: "Daily heating counters reset for new day"
 
   - id: daily_heating_summary_report
