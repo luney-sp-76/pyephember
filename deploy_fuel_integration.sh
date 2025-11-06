@@ -15,20 +15,20 @@ echo "📁 Setting up directories..."
 mkdir -p "$PACKAGES_DIR"
 mkdir -p "$LOVELACE_DIR"
 
-# Copy package files
+# Copy package files (working APIs only)
 echo "📦 Copying package files..."
-if [ -f "fuel_by_home_postcode.yaml" ]; then
-    cp fuel_by_home_postcode.yaml "$PACKAGES_DIR/"
-    echo "  ✓ fuel_by_home_postcode.yaml"
+if [ -f "fuel_by_home_postcode_working.yaml" ]; then
+    cp fuel_by_home_postcode_working.yaml "$PACKAGES_DIR/fuel_by_home_postcode.yaml"
+    echo "  ✓ fuel_by_home_postcode_working.yaml → fuel_by_home_postcode.yaml"
 else
-    echo "  ⚠ fuel_by_home_postcode.yaml not found"
+    echo "  ⚠ fuel_by_home_postcode_working.yaml not found"
 fi
 
-if [ -f "heating_cost_analysis_package.yaml" ]; then
-    cp heating_cost_analysis_package.yaml "$PACKAGES_DIR/"
-    echo "  ✓ heating_cost_analysis_package.yaml"
+if [ -f "heating_cost_analysis_working.yaml" ]; then
+    cp heating_cost_analysis_working.yaml "$PACKAGES_DIR/heating_cost_analysis.yaml"
+    echo "  ✓ heating_cost_analysis_working.yaml → heating_cost_analysis.yaml"
 else
-    echo "  ⚠ heating_cost_analysis_package.yaml not found"
+    echo "  ⚠ heating_cost_analysis_working.yaml not found"
 fi
 
 # Copy dashboard
