@@ -1,0 +1,128 @@
+/config/packages/luften_dynamic.yaml:    name: "Luften Humidity Drop Rate"
+/config/packages/luften_dynamic.yaml:      - name: "Luften Optimal Duration"
+/config/packages/luften_dynamic.yaml:          {% set dp_gap = states('sensor.luften_dewpoint_delta') | float(0) %}
+/config/packages/luften_dynamic.yaml:          {% set avg_drop = states('sensor.luften_humidity_drop_rate') | float(1) %}
+/config/packages/luften_dynamic.yaml:          {% set base = states('sensor.luften_base_minutes_seasonal') | float(10) %}
+/config/packages/luften_dynamic.yaml:  - id: luften_dynamic_pause_resume
+/config/packages/luften_dynamic.yaml:      Uses Luften Optimal Duration to control Castle thermostat dynamically
+/config/packages/luften_dynamic.yaml:        entity_id: calendar.luften_time
+/config/packages/luften_dynamic.yaml:        entity_id: calendar.luften_time
+/config/packages/luften_dynamic.yaml:                  duration: "{{ states('sensor.luften_optimal_duration') | int(10) }}"
+/config/packages/luften_dynamic.yaml:  - id: luften_dynamic_calendar_announce
+/config/packages/luften_dynamic.yaml:        entity_id: calendar.luften_time
+/config/packages/luften_dynamic.yaml:      duration: "{{ states('sensor.luften_optimal_duration') | int(10) }}"
+/config/packages/luften_dynamic.yaml:  - id: luften_test_event_action
+/config/packages/luften_dynamic.yaml:      When pressed, creates a 5-minute Lüften test event in calendar.luften_time
+/config/packages/luften_dynamic.yaml:        entity_id: input_button.luften_test_event
+/config/packages/luften_dynamic.yaml:          entity_id: calendar.luften_time
+/config/packages/luften_dynamic.yaml:  luften_test_event:
+/config/packages/luften_dynamic.yaml:    name: "Trigger Luften Test Event"
+/config/packages/luften_eph.yaml:## LUFTEN ↔ EPH (CASTLE) – Dew Point Driven Climate Control
+/config/packages/luften_eph.yaml:  luften_castle_climate_entity:
+/config/packages/luften_eph.yaml:  luften_castle_indoor_temp_entity:
+/config/packages/luften_eph.yaml:  luften_castle_indoor_rh_entity:
+/config/packages/luften_eph.yaml:  luften_castle_calendar_entity:
+/config/packages/luften_eph.yaml:    initial: calendar.luften_time
+/config/packages/luften_eph.yaml:  luften_castle_comfort_temp_day:
+/config/packages/luften_eph.yaml:    name: "Luften Comfort Temp (Day)"
+/config/packages/luften_eph.yaml:  luften_castle_comfort_temp_night:
+/config/packages/luften_eph.yaml:    name: "Luften Comfort Temp (Night)"
+/config/packages/luften_eph.yaml:  luften_castle_dewpoint_sensitivity:
+/config/packages/luften_eph.yaml:    name: "Luften Dew Point Sensitivity"
+/config/packages/luften_eph.yaml:        unique_id: luften_castle_indoor_dew_point
+/config/packages/luften_eph.yaml:        unique_id: luften_castle_outdoor_dew_point
+/config/packages/luften_eph.yaml:        unique_id: luften_castle_dew_point_diff
+/config/packages/luften_eph.yaml:          {% set in_dp_state = states('sensor.luften_castle_indoor_dew_point') %}
+/config/packages/luften_eph.yaml:          {% set out_dp_state = states('sensor.luften_castle_outdoor_dew_point') %}
+/config/packages/luften_eph.yaml:          {{ states('sensor.luften_castle_indoor_dew_point') not in ['unknown', 'unavailable'] and
+/config/packages/luften_eph.yaml:             states('sensor.luften_castle_outdoor_dew_point') not in ['unknown', 'unavailable'] }}
+/config/packages/luften_eph.yaml:          - sensor.luften_castle_indoor_dew_point
+/config/packages/luften_eph.yaml:          - sensor.luften_castle_outdoor_dew_point
+/config/packages/luften_eph.yaml:          {{ states('sensor.luften_castle_dew_point_diff') not in ['unknown', 'unavailable'] and
+/config/packages/luften_eph.yaml:          diff_state: "{{ states('sensor.luften_castle_dew_point_diff') }}"
+/config/packages/luften_eph.yaml:          sensitivity_state: "{{ states('input_number.luften_castle_dewpoint_sensitivity') }}"
+/config/packages/luften_eph.yaml:          comfort_day_state: "{{ states('input_number.luften_castle_comfort_temp_day') }}"
+/config/packages/luften_eph.yaml:          comfort_night_state: "{{ states('input_number.luften_castle_comfort_temp_night') }}"
+/config/packages/luften_eph.yaml:    id: luften_castle_pause_heating
+/config/packages/luften_eph.yaml:        entity_id: calendar.luften_time
+/config/packages/luften_eph.yaml:    id: luften_castle_resume_heating
+/config/packages/luften_eph.yaml:        entity_id: calendar.luften_time
+/config/packages/luften.yaml:# Place this file at: config/packages/luften.yaml
+/config/packages/luften.yaml:  luften_base_minutes_winter:
+/config/packages/luften.yaml:  luften_base_minutes_summer:
+/config/packages/luften.yaml:  luften_additional_minutes_per_2c_gap:
+/config/packages/luften.yaml:  luften_preferred_morning_hour:
+/config/packages/luften.yaml:  luften_preferred_evening_hour:
+/config/packages/luften.yaml:  luften_min_gap_c:
+/config/packages/luften.yaml:  luften_notify_cooldown_min:
+/config/packages/luften.yaml:  luften_surface_temp_offset:
+/config/packages/luften.yaml:  luften_suppress_if_rain:
+/config/packages/luften.yaml:  luften_suppress_if_freezing:
+/config/packages/luften.yaml:  luften_suppress_if_windy:
+/config/packages/luften.yaml:  luften_quiet_hours:
+/config/packages/luften.yaml:        unique_id: luften_living_room_dew_point
+/config/packages/luften.yaml:        unique_id: luften_bedroom_dew_point
+/config/packages/luften.yaml:        unique_id: luften_outdoor_dew_point
+/config/packages/luften.yaml:        unique_id: luften_outdoor_wind_kmh
+/config/packages/luften.yaml:        unique_id: luften_base_minutes_seasonal
+/config/packages/luften.yaml:          {% set winter = states('input_number.luften_base_minutes_winter') | float(5) %}
+/config/packages/luften.yaml:          {% set summer = states('input_number.luften_base_minutes_summer') | float(25) %}
+/config/packages/luften.yaml:        unique_id: luften_suggestion_living_room_min
+/config/packages/luften.yaml:          {% set base = states('sensor.luften_base_minutes_seasonal') | float(10) %}
+/config/packages/luften.yaml:          {% set add2 = states('input_number.luften_additional_minutes_per_2c_gap') | float(2) %}
+/config/packages/luften.yaml:        unique_id: luften_suggestion_bedroom_min
+/config/packages/luften.yaml:          {% set base = states('sensor.luften_base_minutes_seasonal') | float(10) %}
+/config/packages/luften.yaml:          {% set add2 = states('input_number.luften_additional_minutes_per_2c_gap') | float(2) %}
+/config/packages/luften.yaml:        unique_id: luften_preferred_window_now
+/config/packages/luften.yaml:          {% set mh = states('input_number.luften_preferred_morning_hour') | int(9) %}
+/config/packages/luften.yaml:          {% set eh = states('input_number.luften_preferred_evening_hour') | int(17) %}
+/config/packages/luften.yaml:  luften_notify:
+/config/packages/luften.yaml:          title: "Luften"
+/config/packages/luften.yaml:          message: "Living Room: Open Windows for {{states('sensor.luften_suggestion_living_room_min') }} minutes"
+/config/packages/luften.yaml:          title: "Luften (Fallback)"
+/config/packages/luften.yaml:          message: "Living Room: open Windows for {{ states('sensor.luften_suggestion_living_room_min') }} minutes"
+/config/packages/luften.yaml:  luften_notify_ios_fallback:
+/config/packages/luften.yaml:          message: "Living Room: {{ states('sensor.luften_suggestion_living_room_min') }} min Bedroom: {{ states('sensor.luften_suggestion_bedroom_min') }} min"
+/config/packages/luften.yaml:            Living Room: {{ states('sensor.luften_suggestion_living_room_min') }} min
+/config/packages/luften.yaml:            Bedroom: {{ states('sensor.luften_suggestion_bedroom_min') }} min
+/config/packages/luften.yaml:  - id: luften_check_at_preferred_hours_0
+/config/packages/luften.yaml:          {% set mh = states('input_number.luften_preferred_morning_hour')|int(9) %}
+/config/packages/luften.yaml:          {% set eh = states('input_number.luften_preferred_evening_hour')|int(17) %}
+/config/packages/luften.yaml:        entity_id: input_boolean.luften_quiet_hours
+/config/packages/luften.yaml:          {% set freeze_on = is_state('input_boolean.luften_suppress_if_freezing','on') %}
+/config/packages/luften.yaml:          {% set rain_on   = is_state('input_boolean.luften_suppress_if_rain','on') %}
+/config/packages/luften.yaml:          {% set windy_on  = is_state('input_boolean.luften_suppress_if_windy','on') %}
+/config/packages/luften.yaml:          {% set ws = states('sensor.luften_outdoor_wind_kmh')|float(0) %}
+/config/packages/luften.yaml:          {% set min_gap = states('input_number.luften_min_gap_c')|float(2) %}
+/config/packages/luften.yaml:      - service: script.luften_notify_ios_fallback
+/config/packages/luften.yaml:  - id: luften_opportunistic_every_15m
+/config/packages/luften.yaml:        entity_id: input_boolean.luften_quiet_hours
+/config/packages/luften.yaml:          {% set freeze_on = is_state('input_boolean.luften_suppress_if_freezing','on') %}
+/config/packages/luften.yaml:          {% set rain_on   = is_state('input_boolean.luften_suppress_if_rain','on') %}
+/config/packages/luften.yaml:          {% set windy_on  = is_state('input_boolean.luften_suppress_if_windy','on') %}
+/config/packages/luften.yaml:          {% set ws = states('sensor.luften_outdoor_wind_kmh')|float(0) %}
+/config/packages/luften.yaml:          {% set min_gap = states('input_number.luften_min_gap_c')|float(2) %}
+/config/packages/luften.yaml:          {% set last = state_attr('automation.luften_opportunistic_every_15m','last_triggered') %}
+/config/packages/luften.yaml:          {% set mins = states('input_number.luften_notify_cooldown_min')|int(60) %}
+/config/packages/luften.yaml:      - service: script.luften_notify_ios_fallback
+/config/packages/luften.yaml:  - id: luften_hourly_sanity_check
+/config/packages/luften.yaml:        entity_id: input_boolean.luften_quiet_hours
+/config/packages/luften.yaml:            LR: {{ states('sensor.luften_suggestion_living_room_min') }} min;
+/config/packages/luften.yaml:            BR: {{ states('sensor.luften_suggestion_bedroom_min') }} min;
+/config/packages/luften.yaml:            Window: {{ states('sensor.luften_preferred_window_now') }}
+/config/packages/luften.yaml:  - id: luften_notify_on_calendar_start
+/config/packages/luften.yaml:        entity_id: calendar.luften_time
+/config/packages/luften.yaml:        entity_id: input_boolean.luften_quiet_hours
+/config/packages/luften.yaml:          {% set freeze_on = is_state('input_boolean.luften_suppress_if_freezing','on') %}
+/config/packages/luften.yaml:          {% set rain_on   = is_state('input_boolean.luften_suppress_if_rain','on') %}
+/config/packages/luften.yaml:          {% set windy_on  = is_state('input_boolean.luften_suppress_if_windy','on') %}
+/config/packages/luften.yaml:          {% set ws = states('sensor.luften_outdoor_wind_kmh')|float(0) %}
+/config/packages/luften.yaml:          {% set min_gap = states('input_number.luften_min_gap_c')|float(2) %}
+/config/packages/luften.yaml:      - service: script.luften_notify_ios_fallback
+/config/automations.yaml:- id: luften_flip_night_day_mode
+/config/automations.yaml:          entity_id: input_boolean.luften_night_mode
+/config/automations.yaml:          entity_id: input_boolean.luften_night_mode
+/config/configuration.yaml:# Database for Luften Project
+/config/configuration.yaml:      - sensor.luften_suggestion_living_room_min
+/config/configuration.yaml:      - sensor.luften_suggestion_bedroom_min
+/config/configuration.yaml:      - sensor.luften_dewpoint_delta
