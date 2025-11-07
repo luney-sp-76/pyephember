@@ -17,11 +17,11 @@ mkdir -p "$LOVELACE_DIR"
 
 # Copy package files (working APIs only)
 echo "📦 Copying package files..."
-if [ -f "fuel_by_home_postcode_working.yaml" ]; then
-    cp fuel_by_home_postcode_working.yaml "$PACKAGES_DIR/fuel_by_home_postcode.yaml"
-    echo "  ✓ fuel_by_home_postcode_working.yaml → fuel_by_home_postcode.yaml"
+if [ -f "fuel_by_home_postcode_working_fixed.yaml" ]; then
+    cp fuel_by_home_postcode_working_fixed.yaml "$PACKAGES_DIR/fuel_by_home_postcode.yaml"
+    echo "  ✓ fuel_by_home_postcode_working_fixed.yaml → fuel_by_home_postcode.yaml"
 else
-    echo "  ⚠ fuel_by_home_postcode_working.yaml not found"
+    echo "  ⚠ fuel_by_home_postcode_working_fixed.yaml not found"
 fi
 
 if [ -f "heating_cost_analysis_working.yaml" ]; then
@@ -77,7 +77,7 @@ echo "5. Monitor for any errors in Home Assistant logs"
 
 echo ""
 echo "🎯 Expected Results:"
-echo "• Real-time fuel prices from 13+ UK providers"
+echo "• Real-time fuel prices from 3 working UK providers (ASDA, Morrisons, Sainsbury's)"
 echo "• Cost per kWh for heating oil equivalent"
 echo '• Daily heating cost estimates (e.g., "£8.50/day")'
 echo "• Integration with existing EPH heating analytics"

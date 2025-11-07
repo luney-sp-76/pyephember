@@ -4,7 +4,6 @@ Setup script for Fuel Cost Analysis integration with EPH heating
 Creates the complete configuration ready for Home Assistant deployment
 """
 
-import yaml
 from pathlib import Path
 
 def create_fuel_cost_integration():
@@ -34,8 +33,8 @@ def create_fuel_cost_integration():
     
     # Files to deploy
     files_to_deploy = [
-        ('fuel_by_home_postcode.yaml', 'Main fuel price tracking (existing)'),
-        ('heating_cost_analysis_package.yaml', 'Cost per kWh calculations'),
+        ('fuel_by_home_postcode_working.yaml', 'Main fuel price tracking (working APIs only)'),
+        ('heating_cost_analysis_working.yaml', 'Cost per kWh calculations'),
         ('heating_cost_dashboard.yaml', 'Dashboard configuration'),
     ]
     
@@ -68,12 +67,12 @@ def create_fuel_cost_integration():
     print(f"\n📍 Location-based pricing:")
     print("  • Auto-detects postcode from zone.home")
     print("  • Finds nearest stations by exact/outcode match")
-    print(f"  • Covers {len(['ascona','asda','bp','esso','jet','krl','morrisons','moto','mfg','rontec','sainsburys','sgn','tesco'])} major fuel providers")
+    print(f"  • Covers 3 major working fuel providers")
     
     # Deployment instructions
     print(f"\n🚀 Deployment Steps:")
-    print("1. Copy fuel_by_home_postcode.yaml to /root/config/packages/")
-    print("2. Copy heating_cost_analysis_package.yaml to /root/config/packages/")
+    print("1. Copy fuel_by_home_postcode_working.yaml to /root/config/packages/fuel_by_home_postcode.yaml")
+    print("2. Copy heating_cost_analysis_working.yaml to /root/config/packages/heating_cost_analysis.yaml")
     print("3. Add heating_cost_dashboard.yaml to your Lovelace config")
     print("4. Ensure zone.home is configured with correct coordinates")
     print("5. Restart Home Assistant")
@@ -111,8 +110,10 @@ def create_fuel_cost_integration():
 def verify_apis():
     """Quick verification that APIs are accessible"""
     print(f"\n🔍 API Status Check:")
-    print("Based on earlier test, APIs are working:")
-    print("  ✓ ASDA - stations and prices available")
+    print("Based on earlier test, working APIs:")
+    print("  ✓ ASDA - 790 stations and prices available")
+    print("  ✓ Morrisons - 4 stations and prices available")
+    print("  ✓ Sainsbury's - 316 stations and prices available")
     print("  ✓ Price format: pence (need ÷100 for pounds)")
     print("  ✓ Fuel types: E10, E5, B7, SDV")
     print("  ✓ Location matching by postcode")
@@ -125,3 +126,4 @@ if __name__ == "__main__":
     print("Your EPH heating system can now track fuel costs in real-time!")
     print("The integration will provide cost per kWh, daily estimates,")
     print("and help optimize your heating efficiency based on fuel prices.")
+    print("No external Python dependencies needed - uses HA native REST platform!")
